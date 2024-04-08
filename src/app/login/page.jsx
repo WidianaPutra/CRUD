@@ -2,36 +2,44 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { setCookie, getCookie } from "@/utils/auth";
 
 export default function Login() {
   const [isUser, setIsUser] = useState("");
   const [isPass, setIsPass] = useState("");
-  const [isLogin, setIsLogin] = useState(localStorage.getItem("isLogin"));
-  const [email, setEmail] = useState(localStorage.getItem("email"));
+  const [isLogin, setIsLogin] = useState(getCookie("isLogin"));
+  const [email, setEmail] = useState(getCookie("email"));
   const nav = useRouter();
-  isLogin && email && nav.back();
+
+  isLogin && email && nav.push("/");
 
   const trimmedData = (data) => {
     const trim = data.trim();
-    trim.length === 0 ? false : true;
+    return trim.length === 0 ? false : true;
   };
 
   const handleLogin = async () => {
-    if (!(trimmedData(isUser) && trimmedData(isUser))) {
+    if (trimmedData(isUser) && trimmedData(isPass)) {
       const post = await axios.post("/api/users/login", {
         user: isUser,
         password: isPass,
       });
       if (post.data?.isLogin === true) {
-        localStorage.setItem("isLogin", "true");
+        setCookie("isLogin", "true");
         post.data?.data.map((el, i) => {
-          localStorage.setItem("email", el.email);
+          setCookie("email", el.email);
           nav.refresh();
         });
         nav.push("/");
+        console.log("H");
+      } else {
+        alert("password salah");
       }
-    } else return alert("Tidak berhasil Login");
+    } else {
+      alert("Tidak berhasil Login");
+    }
   };
+
   return (
     <>
       <div>

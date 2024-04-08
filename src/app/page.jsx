@@ -1,26 +1,36 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Gunung from "@/assets/th.jpg";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import swr, { useSWRConfig } from "swr";
 import Input from "@/components/input";
+import { getCookie, removeCookie } from "@/utils/auth";
 
 export default function App() {
-  const [isLogin, setIsLogin] = useState(localStorage.getItem("isLogin"));
-  const [email, setEmail] = useState(localStorage.getItem("email"));
+  const [isLogin, setIsLogin] = useState(getCookie("isLogin"));
+  const [email, setEmail] = useState(getCookie("email"));
   const { mutate } = useSWRConfig();
   const nav = useRouter();
-  nav.refresh();
+
+  useEffect(() => {
+    setIsLogin(getCookie("isLogin"));
+    setEmail(getCookie("email"));
+  }, []);
 
   const getComment = async () => {
     const getData = await axios.get("api/comment");
     return getData.data;
   };
 
-  const { data } = swr("comment", getComment);
+  const handleLogout = () => {
+    removeCookie("isLogin");
+    removeCookie("email");
+    nav.push("/back");
+  };
 
+  const { data } = swr("comment", getComment);
   return (
     <>
       <div className="flex fixed right-0">
@@ -35,10 +45,7 @@ export default function App() {
         {isLogin && email && (
           <h1
             className="text-white p-2 px-5 cursor-pointer hover:text-red-600"
-            onClick={() => {
-              localStorage.clear();
-              location.reload();
-            }}
+            onClick={handleLogout}
           >
             Logout
           </h1>

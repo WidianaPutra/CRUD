@@ -2,13 +2,15 @@
 import axios from "axios";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { email, user, isLogin } from "@/libs/localStorage.js";
+import { setCookie } from "@/utils/auth";
 
 export default function Register() {
   const [hidePass, setHidePass] = useState(false);
   const [inputType, setInputType] = useState("password");
+  const [isLogin, setIsLogin] = useState(getCookie("isLogin"));
+  const [email, setEmailC] = useState(getCookie("email"));
   const nav = useRouter();
-  isLogin && email && nav.back();
+  !isLogin && !email && nav.push("/");
 
   const [user, setUser] = useState("");
   const [isEmail, setEmail] = useState("");
@@ -21,24 +23,32 @@ export default function Register() {
 
   const trimmedData = (data) => {
     const trim = data.trim();
-    trim.length === 0 ? false : true;
+    return trim.length === 0 ? false : true;
   };
 
   const handleUpData = async () => {
-    if (trimmedData(user) && trimmedData(isEmail) && trimmedData(pass))
-      return alert("form tidak valid");
-    else {
+    if (!trimmedData(user) || !trimmedData(isEmail) || !trimmedData(pass)) {
+      alert("Form tidak valid");
+      return;
+    }
+
+    try {
       const post = await axios.post("/api/users", {
         user,
         email: isEmail,
         password: pass,
       });
-      console.log(post.data?.data.email);
+
       if (post.data?.isLogin === true) {
-        localStorage.setItem("isLogin", "true");
-        localStorage.setItem("email", post.data?.data.email);
+        setCookie("isLogin", "true");
+        setCookie("email", post.data?.data.email);
         nav.push("/");
-      } else return alert("Tidak berhasil Login");
+      } else {
+        alert("Tidak berhasil Login");
+      }
+    } catch (error) {
+      console.error("Error registering user:", error);
+      alert("Terjadi kesalahan saat mendaftar.");
     }
   };
 
@@ -54,7 +64,7 @@ export default function Register() {
         type="text"
         placeholder="email"
         onChange={(e) => setEmail(e.target.value)}
-        value={email}
+        value={isEmail}
       />
       <input
         type={inputType}

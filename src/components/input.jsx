@@ -1,29 +1,36 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { getCookie } from "@/utils/auth";
 
 export default function Input({ mutate }) {
-  const [isLogin, setIsLogin] = useState(localStorage.getItem("isLogin"));
-  const [email, setEmail] = useState(localStorage.getItem("email"));
+  const [isLogin, setIsLogin] = useState(getCookie("isLogin"));
+  const [email, setEmail] = useState(getCookie("email"));
   const nav = useRouter();
-  nav.refresh();
   const [isMsg, setIsMsg] = useState("");
+
+  useEffect(() => {
+    setIsLogin(getCookie("isLogin"));
+    setEmail(getCookie("email"));
+  }, []);
 
   const trimmedData = (data) => {
     const trim = data.trim();
-    trim.length === 0 ? false : true;
+    return trim.length === 0 ? false : true;
   };
 
   const handlePostData = async () => {
     if (!(email && isLogin)) return nav.push("/login");
-    if (!trimmedData(isMsg)) {
+    if (trimmedData(isMsg)) {
       const postData = await axios.post("/api/comment", {
         email,
         comment: isMsg,
       });
       mutate("comment");
-    } else return alert("T");
+    } else {
+      alert("T");
+    }
   };
 
   return (
